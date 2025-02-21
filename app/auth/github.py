@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 import httpx
-from models import User
-from config import settings
+from ..models import User
+from ..config import settings
 
 async def get_access_token(code: str) -> str:
     """Exchange code for access token"""
