@@ -6,7 +6,7 @@ import datetime
 from dotenv import load_dotenv
 import os
 from typing import List
-from config import settings
+from .config import settings
 from auth import github
 from auth.github_repos import GitHubAPI
 from .models import User
