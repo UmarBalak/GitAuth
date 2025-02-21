@@ -1,8 +1,8 @@
 from fastapi import HTTPException
 import httpx
 from typing import List
-from models import Repository
-from config import settings
+from ..models import Repository
+from ..config import settings
 
 class GitHubAPI:
     def __init__(self, access_token: str):
