@@ -9,7 +9,7 @@ from typing import List
 from config import settings
 from auth import github
 from auth.github_repos import GitHubAPI
-from models import Repository, User
+from .models import User
 
 # Load environment variables
 load_dotenv()
@@ -50,30 +50,16 @@ async def github_callback(code: str):
         access_token = await github.get_access_token(code)
         user = await github.get_user_data(access_token)
         jwt_token = create_jwt_token(user, access_token)
+        
+        github_api = GitHubAPI(access_token)
+        repositories = await github_api.list_repositories()
+        repositories_data = [repo.dict() for repo in repositories]
 
         return JSONResponse(content={
             "token": jwt_token,
             "username": user.username,
-            "avatar_url": user.avatar_url or ''
+            "avatar_url": user.avatar_url or '',
+            "repositories": repositories_data
         })
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
-
-async def get_github_api(authorization: str = Header(None)) -> GitHubAPI:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid or missing token")
-
-    token = authorization.split("Bearer ")[1]
-
-    try:
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
-        return GitHubAPI(payload["access_token"])
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-@app.get("/repos", response_model=List[Repository])
-async def list_repositories(github: GitHubAPI = Depends(get_github_api)):
-    return await github.list_repositories()
-
