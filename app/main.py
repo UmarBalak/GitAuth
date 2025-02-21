@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi import FastAPI, Depends, HTTPException, Header, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 import jwt
@@ -40,12 +40,12 @@ async def landing_page():
     return JSONResponse(content={"message": "Welcome to the AI Collaboration Platform"})
 
 @app.get("/login")
-async def github_login():
-    github_auth_url = f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}&redirect_uri={settings.GITHUB_REDIRECT_URI}&scope=user:email"
-    return RedirectResponse(url=github_auth_url)
-
-@app.get("/callback")
-async def github_callback(code: str):
+async def github_login(request: Request):
+    code = request.query_params.get("code")
+    if not code:
+        github_auth_url = f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}&redirect_uri={settings.GITHUB_REDIRECT_URI}&scope=user:email"
+        return RedirectResponse(url=github_auth_url)
+    
     try:
         access_token = await github.get_access_token(code)
         user = await github.get_user_data(access_token)
